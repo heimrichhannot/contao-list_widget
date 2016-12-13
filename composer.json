@@ -1,0 +1,35 @@
+{
+    "name": "heimrichhannot/contao-list_widget",
+    "description":"This simple module offers an input type for displaying a list of entities definable by a callback function.",
+    "keywords":["contao", "list", "backend", "input", "type", "inputtype"],
+    "type": "contao-module",
+    "homepage":"https://bitbucket.org/heimrichhannot/contao-list_widget",
+    "license":"LGPL-3.0+",
+    "authors":[
+        {
+            "name":"Heimrich & Hannot",
+            "email":"digitales@heimrich-hannot.de",
+            "homepage":"http://www.heimrich-hannot.de",
+            "role":"Developer"
+        }
+    ],
+    "support":{
+        "issues":"https://bitbucket.org/heimrichhannot/contao-list_widget/issues"
+    },
+    "require": {
+        "php": "~5.6 || ^7.0",
+        "contao/core": ">=3.5,<4-dev",
+        "datatables/datatables": "^1.10",
+        "heimrichhannot/datatables-additional": "^1.0"
+    },
+    "autoload": {
+        "classmap": [""]
+    },
+    "extra": {
+        "contao": {
+            "sources": {
+                "": "system/modules/list_widget"
+            }
+        }
+    }
+}
