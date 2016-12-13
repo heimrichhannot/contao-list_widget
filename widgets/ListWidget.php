@@ -8,7 +8,7 @@ class ListWidget extends \Widget
 
     protected $blnForAttribute   = true;
     protected $strTemplate       = 'be_widget';
-    protected $strEditorTemplate = 'list_widget';
+    protected $strListTemplate = 'list_widget';
     protected $arrDca;
     protected $arrWidgetErrors   = array();
 
@@ -28,7 +28,7 @@ class ListWidget extends \Widget
      */
     public function generate()
     {
-        $objTemplate        = new \BackendTemplate($this->strEditorTemplate);
+        $objTemplate        = new \BackendTemplate($this->strListTemplate);
         $objTemplate->class = $this->arrDca['class'];
 
         // items

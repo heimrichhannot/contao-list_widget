@@ -20,5 +20,4 @@ if (TL_MODE == 'BE')
         'composer/vendor/heimrichhannot/datatables-additional/datatables-RowReorder/css/rowReorder.dataTables.min.css';
 
     $GLOBALS['TL_JAVASCRIPT']['jquery.list_widget.js'] = 'system/modules/list_widget/assets/js/jquery.list_widget.js';
-//    $GLOBALS['TL_CSS']['jquery.list.js']    = 'system/modules/fieldpalette/assets/css/fieldpalette-wizard-be.css';
 }
