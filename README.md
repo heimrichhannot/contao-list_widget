@@ -30,5 +30,5 @@ Use the inputType "listWidget" for your field.
 
 Name | Arguments | Expected return value | Description
 ---- | --------- | --------------------- | -----------
-items_callback | $objDc, $objWidget | array of entity arrays (```[['field1' => 'value1', 'field2' => 'value2'], ...]```) | This callback must return the items to be displayed in the list
-headerFields_callback | $objDc, $objWidget | array containing field and label pairs (```['field1' => 'fieldLabel1', 'field2' => 'fieldLabel2', ...]```) | This callback must return the headerFields to be displayed in the list
+items_callback | $objDc, $arrDca, $objWidget | array of entity arrays (```[['field1' => 'value1', 'field2' => 'value2'], ...]```) | This callback must return the items to be displayed in the list
+headerFields_callback | $objDc, $arrDca, $objWidget | array containing field and label pairs (```['field1' => 'fieldLabel1', 'field2' => 'fieldLabel2', ...]```) | This callback must return the headerFields to be displayed in the list

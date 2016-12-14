@@ -28,29 +28,29 @@ class ListWidget extends \Widget
      */
     public function generate()
     {
-        $objTemplate        = new \BackendTemplate($this->strListTemplate);
+        $objTemplate        = new \BackendTemplate($this->arrDca['template'] ?: $this->strListTemplate);
         $objTemplate->class = $this->arrDca['class'];
 
         // items
         if (is_array($this->arrDca['items_callback']))
         {
             $arrCallback        = $this->arrDca['items_callback'];
-            $objTemplate->items = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this);
+            $objTemplate->items = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this->arrDca, $this);
         }
         elseif (is_callable($this->arrDca['items_callback']))
         {
-            $objTemplate->items = $this->arrDca['items_callback']($this->objDca, $this);
+            $objTemplate->items = $this->arrDca['items_callback']($this->objDca, $this->arrDca, $this);
         }
 
         // header fields
         if (is_array($this->arrDca['headerFields_callback']))
         {
             $arrCallback        = $this->arrDca['headerFields_callback'];
-            $objTemplate->headerFields = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this);
+            $objTemplate->headerFields = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this->arrDca, $this);
         }
         elseif (is_callable($this->arrDca['headerFields_callback']))
         {
-            $objTemplate->headerFields = $this->arrDca['headerFields_callback']($this->objDca, $this);
+            $objTemplate->headerFields = $this->arrDca['headerFields_callback']($this->objDca, $this->arrDca, $this);
         }
 
         return $objTemplate->parse();
