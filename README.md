@@ -15,7 +15,7 @@ For visualization the javascript library [DataTables](https://github.com/DataTab
   - filter the table
   - search the table
   - sort the table
-  - everything of the last 3 points can be done dynamically using ajax -> support for very large Contao model driven entities
+- support for ajax reloading data using datatables -> currently only working for contao models since SQL-commands like LIMIT are used
 
 ### Technical instructions
 
@@ -30,17 +30,22 @@ Use the inputType "listWidget" for your field.
     'inputType' => 'listWidget',
     'eval'      => [
         'listWidget' => [
-            'headerFields_callback' => ['SomeNamespace\MyClass', 'getHeaderFields'], // array keys need to be the keys in items_callback (see list_widget.html5 for explanation)
-            'items_callback'        => ['SomeNamespace\MyClass', 'getItems'],
-            'table'                 => 'tl_dca',
-            'useDbAsHeader'         => true, // "table" option needs to be defined (see above)
-            'template'              => 'list_widget_csv'
-            'ajax'                  => true, // caution: only contao models can be used for ajax reloading at the moment
-            'ajaxConfig'            => [
-                // these two methods don't need to be defined since there are basic implementations already in ListWidget class
-                'load_callback'          => ['SomeNamespace\MyClass', 'loadItems'],
-                'prepare_items_callback' => ['SomeNamespace\MyClass', 'prepareItems']
-            ]
+            'ajax'                   => true,
+            'ajaxConfig'             => [
+                'load_items_callback' => ['SomeClass', 'loadItems']
+            ],
+            'header_fields_callback' => function ()
+            {
+                $arrHeaderFields = [];
+
+                foreach (['academicTitle', 'additionalTitle', 'gender', 'lastname', 'email'] as $strField)
+                {
+                    $arrHeaderFields[$strField] = \HeimrichHannot\Haste\Dca\General::getLocalizedFieldname($strField, 'tl_dca');
+                }
+
+                return $arrHeaderFields;
+            },
+            'table'                  => 'tl_dca'
         ]
     ]
 ]
@@ -51,59 +56,75 @@ Use the inputType "listWidget" for your field.
 Add the following code e.g. in the generate() method of your BackendModule:
 
 ```
-static::$arrListOptions = [
-    'identifier' => 'module' . $this->id, // needed for distinguishing requests from multiple list widget implementations
-    'table' => 'tl_dca', // needed for ajax model handling
-    'load_callback' => ['SomeNamespace\MyClass', 'loadItems'],
-    'prepare_items_callback' => function($objItems) { // prepares the data for the javascript part
-        return $this->parseItems($objItems);
-    },
-    'columns_callback' => ['SomeNamespace\MyClass', 'getColumns'], // get the columns by callback/function...
-    'columns' => static::getColumns(), // ... or set them directly
-    'language' => static::getLanguage() // see ListWidget::getLanguage for the syntax
+static::$arrListConfig = [
+    'identifier' => 'module_' . $this->id,
+    'table' => 'tl_dca',
+    'ajax' => true,
+    'ajaxConfig' => [
+        'load_items_callback' => function($arrConfig, $arrOptions = [], $objContext = null, $objDc = null) {
+            return $this->loadItems($arrConfig, $arrOptions, $objContext, $objDc);
+        },
+        'prepare_items_callback' => function($objItems) {
+            return $this->parseNewsletters($objItems);
+        },
+    ],
+    'columns' => static::getColumns(),
+    'language' => static::getLanguage()
 ];
-ListWidget::initAjaxLoading(static::$arrListOptions);
+
+static::$arrListConfig = ListWidget::prepareConfig(static::$arrListConfig, $this);
+
+ListWidget::initAjaxLoading(static::$arrListConfig);
 ```
 
 Call this in your module's compile method:
 
 ```
-ListWidget::addAjaxLoadingToTemplate($this->Template, static::$arrListOptions);
+ListWidget::addToTemplate($this->Template, static::$arrListOptions);
 ```
 
-#### Example load_callback
+Copy the content of list_widget.html5 into your module's template.
+
+#### Example load_items_callback
 
 Here you can see an example for overriding the core behavior of loadItems():
 
 ```
-public static function loadItemsNew($arrListOptions, $arrOptions = [], $objDc = null, $arrDca = [], $objWidget = null)
+public static function loadItemsNew($arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
 {
     // set an initial filter using the contao options array
     $arrOptions = [
-        'table'   => $arrListOptions['table'],
-        'columns' => $arrListOptions['columns'],
+        'table'   => $arrConfig['table'],
+        'columns' => $arrConfig['columns'],
         // filtering
         'column'  => 'pid',
         'value'   => $objDc->id
     ];
 
     // the rest of the function should also be called
-    return ListWidget::loadItems($arrListOptions, $arrOptions, $objDc, $arrDca, $objWidget);
+    return ListWidget::loadItems($arrConfig, $arrOptions, $objContext, $objDc);
 }
 ```
 
-### DCA-Config
+### Config (same structure for DCA -> eval -> listWidget and shortcut functions)
 
 Name | Possible value | Description
 ---- | -------------- | -----------
-headerFields_callback | callback array, function closure | The callback/function must return the headerFields to be displayed in the list. Array keys need to be the keys in items_callback (see list_widget.html5 for explanation).
-items_callback | callback array, function closure | The callback/function must return the items to be displayed in the list
-table | string (e.g. "tl_dca") | This value is needed for useDbAsHeader and ajax
+identifier | string | Needed for distinguishing requests from multiple list widget implementations, e.g. ```'module_' . $this->id```
+header_fields | array | Must return an array containing the header fields. The keys must match the keys of the arrays/objects in items/items_callback.
+header_fields_callback | callback array, function closure | Must return an array containing the header fields. The keys must match the keys of the arrays/objects in items/items_callback.
+items | array | Must return an array containing the items to be displayed. The item keys must match those in header_fields/header_fields_callback.
+items_callback | callback array, function closure | Must return an array containing the items to be displayed. The item keys must match those in header_fields/header_fields_callback.
+table | string (e.g. "tl_dca") | This value is needed for useDbAsHeader and ajax handling
 useDbAsHeader | boolean | Set to true if the header should contain all fields of a certain database entity ("table" is used)
 template | string | Specify a custom template
+language | array | Specify custom localizations (see ListWidget::getLanguage() for details)
+language_callback | callback array, function closure | Specify custom localizations (see ListWidget::getLanguage() for details)
 ajax | boolean | Set to true if ajax reloading should take place (no need for items_callback in this case)
-ajaxConfig-> load_callback | callback array, function closure | Override this method if custom model options or methods are needed (see ListWidget::loadItems() for details)
-ajaxConfig-> prepare_items_callback | callback array, function closure | Override this method if custom data preparation is needed (see ListWidget::prepareItems() for details)
+ajaxConfig -> load_items | array | Override this if custom model options or methods are needed (see ListWidget::loadItems() for details)
+ajaxConfig -> load_items_callback | callback array, function closure | Override this if custom model options or methods are needed (see ListWidget::loadItems() for details)
+ajaxConfig -> prepare_items | array | Override this if custom data preparation is needed (see ListWidget::prepareItems() for details)
+ajaxConfig -> prepare_items_callback | callback array, function closure | Override this if custom data preparation is needed (see ListWidget::prepareItems() for details)
 
 ### Callbacks
 

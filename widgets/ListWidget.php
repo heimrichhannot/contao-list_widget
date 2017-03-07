@@ -38,27 +38,42 @@ class ListWidget extends \Widget
      */
     public function generate()
     {
-        $objTemplate        = new \BackendTemplate($this->arrDca['template'] ?: $this->strListTemplate);
-        $objTemplate->class = $this->arrDca['class'];
-        $objTemplate->ajax  = $this->arrDca['ajax'];
+        $objTemplate = new \BackendTemplate($this->arrDca['template'] ?: $this->strListTemplate);
 
-        // header fields
-        $arrHeaderFields = [];
+        $arrConfig = $this->arrDca;
 
-        if (is_array($this->arrDca['header_fields_callback']))
+        // no id necessary for identifier since a backend widget can only be available once in a palette
+        $arrConfig['identifier'] = $this->name;
+
+        $arrConfig = static::prepareConfig($arrConfig, $this->objDca, $this);
+
+        if ($arrConfig['ajax'])
         {
-            $arrCallback     = $this->arrDca['header_fields_callback'];
-            $arrHeaderFields = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this->arrDca, $this);
+            static::initAjaxLoading(
+                $arrConfig,
+                $this,
+                $this->objDca
+            );
+
         }
-        elseif (is_callable($this->arrDca['header_fields_callback']))
-        {
-            $arrHeaderFields = $this->arrDca['header_fields_callback']($this->objDca, $this->arrDca, $this);
-        }
 
-        if ($this->arrDca['useDbAsHeader'])
+        static::addToTemplate($objTemplate, $arrConfig);
+
+        return $objTemplate->parse();
+    }
+
+    public static function prepareConfig($arrConfig = [], $objContext = null, $objDca = null)
+    {
+        $arrConfig = $arrConfig ?: [];
+
+        // header
+        $arrConfig['headerFields'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'header_fields', [$arrConfig, $objContext, $objDca]);
+
+        if ($arrConfig['useDbAsHeader'] && $arrConfig['table'])
         {
-            $strTable  = $this->arrDca['table'];
-            $arrFields = \Database::getInstance()->getFieldNames($strTable, true);
+            $strTable        = $arrConfig['table'];
+            $arrFields       = \Database::getInstance()->getFieldNames($strTable, true);
+            $arrHeaderFields = [];
 
             foreach ($arrFields as $strField)
             {
@@ -69,51 +84,28 @@ class ListWidget extends \Widget
 
                 $arrHeaderFields[$strField] = General::getLocalizedFieldname($strField, $strTable);
             }
+
+            $arrConfig['headerFields'] = $arrHeaderFields;
         }
 
-        $objTemplate->headerFields = $arrHeaderFields;
-
-        $arrOptions = [
-            // no id necessary for identifier since a backend widget can only be available once in a palette
-            'identifier' => $this->name,
-            'table'      => $this->arrDca['table'],
-            'language'   => $this->arrDca['language']
-        ];
-
-        $objTemplate->language = htmlentities(json_encode($arrOptions['language']));
-
-        if (!$this->arrDca['ajax'])
+        if (!$arrConfig['ajax'])
         {
-            // items
-            if (is_array($this->arrDca['items_callback']))
-            {
-                $arrCallback        = $this->arrDca['items_callback'];
-                $objTemplate->items = \System::importStatic($arrCallback[0])->{$arrCallback[1]}($this->objDca, $this->arrDca, $this);
-            }
-            elseif (is_callable($this->arrDca['items_callback']))
-            {
-                $objTemplate->items = $this->arrDca['items_callback']($this->objDca, $this->arrDca, $this);
-            }
+            $arrConfig['items'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'items', [$arrConfig, $objContext, $objDca]);
         }
-        else
+
+        $arrConfig['language'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'language', [$arrConfig, $objContext, $objDca]);
+
+        $arrConfig['columns'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'columns', [$arrConfig, $objContext, $objDca]);
+
+        // prepare columns -> if not specified, get it from header fields
+        if (!$arrConfig['columns'])
         {
-            if (isset($this->arrDca['ajaxConfig']['load_callback']))
+            if (is_array($arrConfig['headerFields']))
             {
-                $arrOptions['load_callback'] = $this->arrDca['ajaxConfig']['load_callback'];
-            }
+                $arrColumns = [];
+                $i          = 0;
 
-            if (isset($this->arrDca['ajaxConfig']['prepare_items_callback']))
-            {
-                $arrOptions['prepare_items_callback'] = $this->arrDca['ajaxConfig']['prepare_items_callback'];
-            }
-
-            // prepare columns
-            $arrColumns = [];
-            $i = 0;
-
-            if (array_is_assoc($arrHeaderFields))
-            {
-                foreach ($arrHeaderFields as $strField => $strLabel)
+                foreach ($arrConfig['headerFields'] as $strField => $strLabel)
                 {
                     $arrColumns[] = [
                         'name'       => $strLabel,
@@ -123,110 +115,73 @@ class ListWidget extends \Widget
                         'className'  => is_numeric($strField) ? 'col_' . $strField : $strField
                     ];
                 }
+
+                $arrConfig['columns'] = $arrColumns;
             }
-            else
+        }
+
+        return $arrConfig;
+    }
+
+
+    public static function initAjaxLoading(array $arrConfig, $objContext = null, $objDc = null)
+    {
+        if (!Request::getInstance()->isXmlHttpRequest())
+        {
+            return;
+        }
+
+        if (Request::getGet('key') == ListWidget::LOAD_ACTION && Request::getGet('scope') == $arrConfig['identifier'])
+        {
+            $objResponse = new ResponseSuccess();
+
+            // start loading
+            if (!isset($arrConfig['ajaxConfig']['load_items_callback']))
             {
-                foreach ($arrHeaderFields as $strField)
+                $arrConfig['ajaxConfig']['load_items_callback'] = function () use ($arrConfig, $objContext, $objDc)
                 {
-                    $arrColumns[] = [
-                        'name'       => is_numeric($strField) ? $strField : General::getLocalizedFieldname($strField, $this->arrDca['table']),
-                        'db'         => $strField,
-                        'dt'         => $i++,
-                        'searchable' => true,
-                        'className'  => is_numeric($strField) ? 'col_' . $strField : $strField
-                    ];
-                }
+                    return self::loadItems($arrConfig, [], $objContext, $objDc);
+                };
             }
 
-            $arrOptions['columns'] = $arrColumns;
-
-            static::initAjaxLoading(
-                $arrOptions,
-                $this->objDca,
-                $this->arrDca,
-                $this
+            $strResult = General::getConfigByArrayOrCallbackOrFunction(
+                $arrConfig['ajaxConfig'],
+                'load_items',
+                [$arrConfig, [], $objContext, $objDc]
             );
 
-            static::addAjaxLoadingToTemplate($objTemplate, $arrOptions);
+            $objResponse->setResult(new ResponseData('', $strResult));
+            $objResponse->output();
         }
-
-        return $objTemplate->parse();
     }
 
-
-    public static function initAjaxLoading(array $arrOptions, $objDc = null, $arrDca = [], $objWidget = null)
+    public static function addToTemplate($objTemplate, array $arrConfig)
     {
-        if (Request::getInstance()->isXmlHttpRequest())
+        $objTemplate->class        = $arrConfig['class'];
+        $objTemplate->ajax         = $arrConfig['ajax'];
+        $objTemplate->headerFields = $arrConfig['headerFields'];
+        $objTemplate->columnDefs   = htmlentities(json_encode(static::getColumnDefsData($arrConfig['columns'])));
+        $objTemplate->language     = htmlentities(json_encode($arrConfig['language']));
+
+        if ($arrConfig['ajax'])
         {
-            if (Request::getGet('key') == ListWidget::LOAD_ACTION && Request::getGet('scope') == $arrOptions['identifier'])
-            {
-                $objResponse = new ResponseSuccess();
-                $strResult   = '';
-
-                // start loading
-                if (!isset($arrOptions['load_callback']))
-                {
-                    $arrOptions['load_callback'] = function () use ($arrOptions, $objDc, $arrDca, $objWidget)
-                    {
-                        return self::loadItems($arrOptions, [], $objDc, $arrDca, $objWidget);
-                    };
-                }
-
-                if (is_array($arrOptions['load_callback']))
-                {
-                    $strResult = \System::importStatic($arrOptions['load_callback'][0])->{$arrOptions['load_callback'][1]}(
-                        $arrOptions,
-                        [],
-                        $objDc,
-                        $arrDca,
-                        $objWidget
-                    );
-                }
-                elseif (is_callable($arrOptions['load_callback']))
-                {
-                    $strResult = $arrOptions['load_callback']($arrOptions, [], $objDc, $arrDca, $objWidget);
-                }
-
-                $objResponse->setResult(new ResponseData('', $strResult));
-                $objResponse->output();
-            }
+            $objTemplate->processingAction = Url::addQueryString(
+                'key=' . static::LOAD_ACTION . '&scope=' . $arrConfig['identifier'] . '&rt=' . \RequestToken::get()
+            );
+        }
+        else
+        {
+            $objTemplate->items = $arrConfig['items'];
         }
     }
 
-    public static function addAjaxLoadingToTemplate($objTemplate, array $arrOptions)
-    {
-        $strProcessingAction =
-            Url::addQueryString('key=' . static::LOAD_ACTION . '&scope=' . $arrOptions['identifier'] . '&rt=' . \RequestToken::get());
-
-        $objTemplate->processingAction = $strProcessingAction;
-
-        // prepare columns
-        if (!isset($arrOptions['columns']))
-        {
-            if (isset($arrOptions['columns_callback']))
-            {
-                if (is_array($arrOptions['columns_callback']))
-                {
-                    $arrOptions['columns'] = \System::importStatic($arrOptions['columns_callback'][0])->{$arrOptions['columns_callback'][1]}();
-                }
-                elseif (is_callable($arrOptions['columns_callback']))
-                {
-                    $arrOptions['columns'] = $arrOptions['columns_callback']();
-                }
-            }
-        }
-
-        $objTemplate->columnDefs = htmlentities(json_encode(static::getColumnDefsData($arrOptions['columns'])));
-        $objTemplate->language   = htmlentities(json_encode($arrOptions['language']));
-    }
-
-    public static function loadItems($arrListOptions, $arrOptions = [], $objDc = null, $arrDca = [], $objWidget = null)
+    public static function loadItems($arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
     {
         $arrOptions = !empty($arrOptions)
             ? $arrOptions
             : [
-                'table'   => $arrListOptions['table'],
-                'columns' => $arrListOptions['columns']
+                'table'   => $arrConfig['table'],
+                'columns' => $arrConfig['columns']
             ];
 
         $objItems                       = static::fetchItems($arrOptions);
@@ -236,34 +191,26 @@ class ListWidget extends \Widget
         $arrResponse['recordsFiltered'] = intval(static::countFiltered($arrOptions));
 
         // prepare
-        if (!isset($arrListOptions['prepare_items_callback']))
+        if (!isset($arrConfig['ajaxConfig']['prepare_items_callback']))
         {
-            $arrListOptions['prepare_items_callback'] = function () use ($objItems, $arrListOptions, $arrOptions, $objDc, $arrDca, $objWidget)
+            $arrConfig['ajaxConfig']['prepare_items_callback'] = function () use ($objItems, $arrConfig, $arrOptions, $objContext, $objDc)
             {
-                return self::prepareItems($objItems, $arrListOptions, $arrOptions, $objDc, $arrDca, $objWidget);
+                return self::prepareItems($objItems, $arrConfig, $arrOptions, $objContext, $objDc);
             };
         }
 
-        if (is_array($arrListOptions['prepare_items_callback']))
-        {
-            $arrResponse['data'] = \System::importStatic($arrListOptions['prepare_items_callback'][0])->{$arrOptions['prepare_items_callback'][1]}(
-                $objItems,
-                $arrListOptions,
-                $arrOptions,
-                $objDc,
-                $arrDca,
-                $objWidget
-            );
-        }
-        elseif (is_callable($arrListOptions['prepare_items_callback']))
-        {
-            $arrResponse['data'] = $arrListOptions['prepare_items_callback']($objItems, $arrListOptions, $arrOptions, $objDc, $arrDca, $objWidget);
-        }
+        $arrResponse['data'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig['ajaxConfig'], 'prepare_items', [
+            $objItems,
+            $arrConfig,
+            $arrOptions,
+            $objContext,
+            $objDc
+        ]);
 
         return $arrResponse;
     }
 
-    protected function prepareItems($objItems, $arrListOptions, $arrOptions = [], $objDc = null, $arrDca = [], $objWidget = null)
+    protected function prepareItems($objItems, $arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
     {
         if ($objItems === null)
         {
@@ -277,7 +224,7 @@ class ListWidget extends \Widget
             $objItem = $objItems->current();
             $arrItem = [];
 
-            foreach ($arrListOptions['columns'] as $arrColumn)
+            foreach ($arrConfig['columns'] as $arrColumn)
             {
                 $arrItem[] = [
                     'value' => $objItem->{$arrColumn['db']}
@@ -461,20 +408,6 @@ class ListWidget extends \Widget
         if (count($columnSearch))
         {
             $where = $where === '' ? implode(' AND ', $columnSearch) : $where . ' AND ' . implode(' AND ', $columnSearch);
-        }
-
-
-        if (!\BackendUser::getInstance()->isAdmin)
-        {
-            $arrPids = \BackendUser::getInstance()->mdChannels;
-
-            // Set root IDs
-            if (!is_array(\BackendUser::getInstance()->mdChannels) || empty(\BackendUser::getInstance()->mdChannels))
-            {
-                $arrPids = [0];
-            }
-
-            $where .= " $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")";
         }
 
 
