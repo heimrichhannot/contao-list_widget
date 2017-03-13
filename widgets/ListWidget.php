@@ -45,7 +45,7 @@ class ListWidget extends \Widget
         // no id necessary for identifier since a backend widget can only be available once in a palette
         $arrConfig['identifier'] = $this->name;
 
-        $arrConfig = static::prepareConfig($arrConfig, $this->objDca, $this);
+        $arrConfig = static::prepareConfig($arrConfig, $this, $this->objDca);
 
         if ($arrConfig['ajax'])
         {
