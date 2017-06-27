@@ -17,11 +17,12 @@
         "issues":"https://bitbucket.org/heimrichhannot/contao-list_widget/issues"
     },
     "require": {
-        "php": "~5.6 || ^7.0",
-        "contao/core": ">=3.5,<4-dev",
-        "datatables/datatables": "^1.10",
+        "php": "~5.4 || ~7.0",
+        "contao/core-bundle": "^3.5.1 || ~4.1",
+        "contao-community-alliance/composer-plugin": "~2.4 || ~3.0",
         "heimrichhannot/contao-request": "~1.0",
         "heimrichhannot/contao-haste_plus": "~1.6",
+        "heimrichhannot/datatables": "^1.10",
         "heimrichhannot/datatables-additional": "^1.0"
     },
     "autoload": {
