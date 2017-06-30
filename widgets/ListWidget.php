@@ -112,7 +112,7 @@ class ListWidget extends \Widget
                         'db'         => $strField,
                         'dt'         => $i++,
                         'searchable' => true,
-                        'className'  => is_numeric($strField) ? 'col_' . $strField : $strField
+                        'className'  => is_numeric($strField) ? 'col_' . $strField : $strField,
                     ];
                 }
 
@@ -181,7 +181,7 @@ class ListWidget extends \Widget
             ? $arrOptions
             : [
                 'table'   => $arrConfig['table'],
-                'columns' => $arrConfig['columns']
+                'columns' => $arrConfig['columns'],
             ];
 
         $objItems                       = static::fetchItems($arrOptions);
@@ -199,13 +199,17 @@ class ListWidget extends \Widget
             };
         }
 
-        $arrResponse['data'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig['ajaxConfig'], 'prepare_items', [
-            $objItems,
-            $arrConfig,
-            $arrOptions,
-            $objContext,
-            $objDc
-        ]);
+        $arrResponse['data'] = General::getConfigByArrayOrCallbackOrFunction(
+            $arrConfig['ajaxConfig'],
+            'prepare_items',
+            [
+                $objItems,
+                $arrConfig,
+                $arrOptions,
+                $objContext,
+                $objDc,
+            ]
+        );
 
         return $arrResponse;
     }
@@ -227,7 +231,7 @@ class ListWidget extends \Widget
             foreach ($arrConfig['columns'] as $arrColumn)
             {
                 $arrItem[] = [
-                    'value' => $objItem->{$arrColumn['db']}
+                    'value' => $objItem->{$arrColumn['db']},
                 ];
             }
 
@@ -413,7 +417,13 @@ class ListWidget extends \Widget
 
         if ($where)
         {
-            $arrOptions['column'] = [$where]; // prevent adding table before where clause by creating array
+            if (is_array($arrOptions['column']))
+            {
+                $arrOptions['column'] = array_merge($arrOptions['column'], [$where]);
+            }
+            else{
+                $arrOptions['column'] = [$where]; // prevent adding table before where clause by creating array
+            }
         }
 
         return $arrOptions;
