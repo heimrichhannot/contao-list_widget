@@ -214,7 +214,7 @@ class ListWidget extends \Widget
         return $arrResponse;
     }
 
-    protected function prepareItems($objItems, $arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
+    protected static function prepareItems($objItems, $arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
     {
         if ($objItems === null)
         {
@@ -260,9 +260,10 @@ class ListWidget extends \Widget
     /**
      * Count the total matching items
      *
-     * @return integer
+     * @param array $arrOptions
+     * @return int
      */
-    protected function countTotal(array $arrOptions)
+    protected static function countTotal(array $arrOptions)
     {
         $strModel = \Model::getClassFromTable($arrOptions['table']);
 
@@ -283,7 +284,7 @@ class ListWidget extends \Widget
      *
      * @return integer
      */
-    protected function countFiltered($arrOptions)
+    protected static function countFiltered($arrOptions)
     {
         unset($arrOptions['limit']);
         unset($arrOptions['offset']);
@@ -327,7 +328,7 @@ class ListWidget extends \Widget
      *
      * @return array The $arrOptions filled with limit clause
      */
-    static function limitSQL($arrOptions)
+    protected static function limitSQL($arrOptions)
     {
         if (Request::hasGet('start') && Request::getGet('length') != -1)
         {
@@ -351,7 +352,7 @@ class ListWidget extends \Widget
      *
      * @return array The $arrOptions filled with where conditions (values and columns)
      */
-    protected function filterSQL($arrOptions)
+    protected static function filterSQL($arrOptions)
     {
         $t = $arrOptions['table'];
 
@@ -438,7 +439,7 @@ class ListWidget extends \Widget
      *
      * @return array The $arrOptions filled with order conditions
      */
-    protected function orderSQL($arrOptions)
+    protected static function orderSQL($arrOptions)
     {
         $t       = $arrOptions['table'];
         $request = Request::getInstance()->query->all();

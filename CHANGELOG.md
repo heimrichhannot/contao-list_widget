@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.4] - 2017-09-22
+
+### Fixed 
+* methods not set static in list widget (error in contao 4)
+
 ## [2.1.3] - 2017-06-30
 
 ### Fixed
