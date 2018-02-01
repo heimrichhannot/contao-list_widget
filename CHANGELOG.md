@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 ## [2.1.5] - 2018-02-01
 
 ### Fixed 
-* `ListWidget::filterSQL` did overwrite `column` options if they were no array -> default `AND` filter criteria will get lost
+- `ListWidget::filterSQL` did overwrite `column` options if they were no array -> default `AND` filter criteria will get lost
+
+### Changed
+- Licence from LGPL-3.0+ to LGPL-3.0-or-later
 
 ## [2.1.4] - 2017-09-22
 

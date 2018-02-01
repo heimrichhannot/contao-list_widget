@@ -4,7 +4,7 @@
     "keywords":["contao", "list", "backend", "input", "type", "inputtype"],
     "type": "contao-module",
     "homepage":"https://bitbucket.org/heimrichhannot/contao-list_widget",
-    "license":"LGPL-3.0+",
+    "license":"LGPL-3.0-or-later",
     "authors":[
         {
             "name":"Heimrich & Hannot",
