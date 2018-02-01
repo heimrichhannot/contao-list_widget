@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.5] - 2018-02-01
+
+### Fixed 
+* `ListWidget::filterSQL` did overwrite `column` options if they were no array -> default `AND` filter criteria will get lost
+
 ## [2.1.4] - 2017-09-22
 
 ### Fixed 

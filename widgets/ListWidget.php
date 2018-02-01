@@ -416,15 +416,9 @@ class ListWidget extends \Widget
         }
 
 
-        if ($where)
-        {
-            if (is_array($arrOptions['column']))
-            {
-                $arrOptions['column'] = array_merge($arrOptions['column'], [$where]);
-            }
-            else{
-                $arrOptions['column'] = [$where]; // prevent adding table before where clause by creating array
-            }
+        if ($where) {
+            $arrOptions['column'] = is_array($arrOptions['column']) ? $arrOptions['column'] : [$arrOptions['column']];
+            $arrOptions['column'] = array_merge($arrOptions['column'], [$where]);
         }
 
         return $arrOptions;
