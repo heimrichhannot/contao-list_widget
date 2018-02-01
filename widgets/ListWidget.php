@@ -415,9 +415,9 @@ class ListWidget extends \Widget
             $where = $where === '' ? implode(' AND ', $columnSearch) : $where . ' AND ' . implode(' AND ', $columnSearch);
         }
 
+	$arrOptions['column'] = is_array($arrOptions['column']) ? $arrOptions['column'] : [$arrOptions['column']];
 
         if ($where) {
-            $arrOptions['column'] = is_array($arrOptions['column']) ? $arrOptions['column'] : [$arrOptions['column']];
             $arrOptions['column'] = array_merge($arrOptions['column'], [$where]);
         }
 

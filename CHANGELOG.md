@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.6] - 2018-02-01
+
+### Fixed 
+- `ListWidget::filterSQL` too few arguments when no `where` condition set
+
 ## [2.1.5] - 2018-02-01
 
 ### Fixed 
