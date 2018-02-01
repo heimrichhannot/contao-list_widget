@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.7] - 2018-02-01
+
+### Fixed 
+- ensure that `$arrOptions['column']` is not empty
+
 ## [2.1.6] - 2018-02-01
 
 ### Fixed 

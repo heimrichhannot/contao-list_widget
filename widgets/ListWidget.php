@@ -15,7 +15,7 @@ class ListWidget extends \Widget
     const LOAD_ACTION = 'list-load';
 
     protected $blnForAttribute = true;
-    protected $strTemplate     = 'be_widget';
+    protected $strTemplate = 'be_widget';
     protected $strListTemplate = 'list_widget';
     protected $arrDca;
     protected $arrWidgetErrors = [];
@@ -47,8 +47,7 @@ class ListWidget extends \Widget
 
         $arrConfig = static::prepareConfig($arrConfig, $this, $this->objDca);
 
-        if ($arrConfig['ajax'])
-        {
+        if ($arrConfig['ajax']) {
             static::initAjaxLoading(
                 $arrConfig,
                 $this,
@@ -69,16 +68,13 @@ class ListWidget extends \Widget
         // header
         $arrConfig['headerFields'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'header_fields', [$arrConfig, $objContext, $objDca]);
 
-        if ($arrConfig['useDbAsHeader'] && $arrConfig['table'])
-        {
+        if ($arrConfig['useDbAsHeader'] && $arrConfig['table']) {
             $strTable        = $arrConfig['table'];
             $arrFields       = \Database::getInstance()->getFieldNames($strTable, true);
             $arrHeaderFields = [];
 
-            foreach ($arrFields as $strField)
-            {
-                if (in_array($strField, static::$arrSkipFields))
-                {
+            foreach ($arrFields as $strField) {
+                if (in_array($strField, static::$arrSkipFields)) {
                     continue;
                 }
 
@@ -88,8 +84,7 @@ class ListWidget extends \Widget
             $arrConfig['headerFields'] = $arrHeaderFields;
         }
 
-        if (!$arrConfig['ajax'])
-        {
+        if (!$arrConfig['ajax']) {
             $arrConfig['items'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'items', [$arrConfig, $objContext, $objDca]);
         }
 
@@ -98,15 +93,12 @@ class ListWidget extends \Widget
         $arrConfig['columns'] = General::getConfigByArrayOrCallbackOrFunction($arrConfig, 'columns', [$arrConfig, $objContext, $objDca]);
 
         // prepare columns -> if not specified, get it from header fields
-        if (!$arrConfig['columns'])
-        {
-            if (is_array($arrConfig['headerFields']))
-            {
+        if (!$arrConfig['columns']) {
+            if (is_array($arrConfig['headerFields'])) {
                 $arrColumns = [];
                 $i          = 0;
 
-                foreach ($arrConfig['headerFields'] as $strField => $strLabel)
-                {
+                foreach ($arrConfig['headerFields'] as $strField => $strLabel) {
                     $arrColumns[] = [
                         'name'       => $strLabel,
                         'db'         => $strField,
@@ -126,20 +118,16 @@ class ListWidget extends \Widget
 
     public static function initAjaxLoading(array $arrConfig, $objContext = null, $objDc = null)
     {
-        if (!Request::getInstance()->isXmlHttpRequest())
-        {
+        if (!Request::getInstance()->isXmlHttpRequest()) {
             return;
         }
 
-        if (Request::getGet('key') == ListWidget::LOAD_ACTION && Request::getGet('scope') == $arrConfig['identifier'])
-        {
+        if (Request::getGet('key') == ListWidget::LOAD_ACTION && Request::getGet('scope') == $arrConfig['identifier']) {
             $objResponse = new ResponseSuccess();
 
             // start loading
-            if (!isset($arrConfig['ajaxConfig']['load_items_callback']))
-            {
-                $arrConfig['ajaxConfig']['load_items_callback'] = function () use ($arrConfig, $objContext, $objDc)
-                {
+            if (!isset($arrConfig['ajaxConfig']['load_items_callback'])) {
+                $arrConfig['ajaxConfig']['load_items_callback'] = function () use ($arrConfig, $objContext, $objDc) {
                     return self::loadItems($arrConfig, [], $objContext, $objDc);
                 };
             }
@@ -163,14 +151,11 @@ class ListWidget extends \Widget
         $objTemplate->columnDefs   = htmlentities(json_encode(static::getColumnDefsData($arrConfig['columns'])));
         $objTemplate->language     = htmlentities(json_encode($arrConfig['language']));
 
-        if ($arrConfig['ajax'])
-        {
+        if ($arrConfig['ajax']) {
             $objTemplate->processingAction = Url::addQueryString(
                 'key=' . static::LOAD_ACTION . '&scope=' . $arrConfig['identifier'] . '&rt=' . \RequestToken::get()
             );
-        }
-        else
-        {
+        } else {
             $objTemplate->items = $arrConfig['items'];
         }
     }
@@ -191,10 +176,8 @@ class ListWidget extends \Widget
         $arrResponse['recordsFiltered'] = intval(static::countFiltered($arrOptions));
 
         // prepare
-        if (!isset($arrConfig['ajaxConfig']['prepare_items_callback']))
-        {
-            $arrConfig['ajaxConfig']['prepare_items_callback'] = function () use ($objItems, $arrConfig, $arrOptions, $objContext, $objDc)
-            {
+        if (!isset($arrConfig['ajaxConfig']['prepare_items_callback'])) {
+            $arrConfig['ajaxConfig']['prepare_items_callback'] = function () use ($objItems, $arrConfig, $arrOptions, $objContext, $objDc) {
                 return self::prepareItems($objItems, $arrConfig, $arrOptions, $objContext, $objDc);
             };
         }
@@ -216,20 +199,17 @@ class ListWidget extends \Widget
 
     protected static function prepareItems($objItems, $arrConfig, $arrOptions = [], $objContext = null, $objDc = null)
     {
-        if ($objItems === null)
-        {
+        if ($objItems === null) {
             return [];
         }
 
         $arrItems = [];
 
-        while ($objItems->next())
-        {
+        while ($objItems->next()) {
             $objItem = $objItems->current();
             $arrItem = [];
 
-            foreach ($arrConfig['columns'] as $arrColumn)
-            {
+            foreach ($arrConfig['columns'] as $arrColumn) {
                 $arrItem[] = [
                     'value' => $objItem->{$arrColumn['db']},
                 ];
@@ -245,8 +225,7 @@ class ListWidget extends \Widget
     {
         $arrConfig = [];
 
-        foreach ($arrColumns as $i => $arrColumn)
-        {
+        foreach ($arrColumns as $i => $arrColumn) {
             $arrConfig[] = array_merge(
                 Arrays::filterByPrefixes($arrColumn, ['searchable', 'className', 'orderable', 'type']),
                 ['targets' => $arrColumn['dt']],
@@ -267,12 +246,9 @@ class ListWidget extends \Widget
     {
         $strModel = \Model::getClassFromTable($arrOptions['table']);
 
-        if (isset($arrOptions['column']))
-        {
+        if (isset($arrOptions['column'])) {
             return $strModel::countBy($arrOptions['column'], $arrOptions['value'], $arrOptions);
-        }
-        else
-        {
+        } else {
             return $strModel::countAll();
         }
     }
@@ -291,12 +267,9 @@ class ListWidget extends \Widget
 
         $strModel = \Model::getClassFromTable($arrOptions['table']);
 
-        if (isset($arrOptions['column']))
-        {
+        if (isset($arrOptions['column'])) {
             return $strModel::countBy($arrOptions['column'], $arrOptions['value'], $arrOptions);
-        }
-        else
-        {
+        } else {
             return $strModel::countAll();
         }
     }
@@ -330,8 +303,7 @@ class ListWidget extends \Widget
      */
     protected static function limitSQL($arrOptions)
     {
-        if (Request::hasGet('start') && Request::getGet('length') != -1)
-        {
+        if (Request::hasGet('start') && Request::getGet('length') != -1) {
             $arrOptions['limit']  = Request::getGet('length');
             $arrOptions['offset'] = Request::getGet('start');
         }
@@ -362,63 +334,61 @@ class ListWidget extends \Widget
         $dtColumns    = self::pluck($columns, 'dt');
         $request      = Request::getInstance()->query->all();
 
-        if (isset($request['search']) && $request['search']['value'] != '')
-        {
+        if (isset($request['search']) && $request['search']['value'] != '') {
             $str = $request['search']['value'];
-            for ($i = 0, $ien = count($request['columns']); $i < $ien; $i++)
-            {
+            for ($i = 0, $ien = count($request['columns']); $i < $ien; $i++) {
                 $requestColumn = $request['columns'][$i];
                 $columnIdx     = array_search($requestColumn['data'], $dtColumns);
                 $column        = $columns[$columnIdx];
 
-                if (!$column['db'])
-                {
+                if (!$column['db']) {
                     continue;
                 }
 
-                if ($requestColumn['searchable'] == 'true')
-                {
+                if ($requestColumn['searchable'] == 'true') {
                     $globalSearch[] = "$t." . $column['db'] . " LIKE '%%" . $str . "%%'";
                 }
             }
         }
         // Individual column filtering
-        if (isset($request['columns']))
-        {
-            for ($i = 0, $ien = count($request['columns']); $i < $ien; $i++)
-            {
+        if (isset($request['columns'])) {
+            for ($i = 0, $ien = count($request['columns']); $i < $ien; $i++) {
                 $requestColumn = $request['columns'][$i];
                 $columnIdx     = array_search($requestColumn['data'], $dtColumns);
                 $column        = $columns[$columnIdx];
                 $str           = $requestColumn['search']['value'];
 
-                if (!$column['db'])
-                {
+                if (!$column['db']) {
                     continue;
                 }
 
-                if ($requestColumn['searchable'] == 'true' && $str != '')
-                {
+                if ($requestColumn['searchable'] == 'true' && $str != '') {
                     $columnSearch[] = "$t." . $column['db'] . " LIKE '%%" . $str . "%%'";
                 }
             }
         }
         // Combine the filters into a single string
         $where = '';
-        if (count($globalSearch))
-        {
+        if (count($globalSearch)) {
             $where = '(' . implode(' OR ', $globalSearch) . ')';
         }
 
-        if (count($columnSearch))
-        {
+        if (count($columnSearch)) {
             $where = $where === '' ? implode(' AND ', $columnSearch) : $where . ' AND ' . implode(' AND ', $columnSearch);
         }
 
-	$arrOptions['column'] = is_array($arrOptions['column']) ? $arrOptions['column'] : [$arrOptions['column']];
+        if (isset($arrOptions['column'])) {
+            $arrOptions['column'] = is_array($arrOptions['column']) ? $arrOptions['column'] : [$arrOptions['column']];
+        } else {
+            $arrOptions['column'] = [];
+        }
 
         if ($where) {
             $arrOptions['column'] = array_merge($arrOptions['column'], [$where]);
+        }
+
+        if (empty($arrOptions['column'])) {
+            $arrOptions['column'] = null;
         }
 
         return $arrOptions;
@@ -439,41 +409,33 @@ class ListWidget extends \Widget
         $request = Request::getInstance()->query->all();
         $columns = $arrOptions['columns'];
 
-        if (isset($request['order']) && count($request['order']))
-        {
+        if (isset($request['order']) && count($request['order'])) {
             $orderBy   = [];
             $dtColumns = static::pluck($columns, 'dt');
-            for ($i = 0, $ien = count($request['order']); $i < $ien; $i++)
-            {
+            for ($i = 0, $ien = count($request['order']); $i < $ien; $i++) {
                 // Convert the column index into the column data property
                 $columnIdx     = intval($request['order'][$i]['column']);
                 $requestColumn = $request['columns'][$columnIdx];
                 $columnIdx     = array_search($requestColumn['data'], $dtColumns);
                 $column        = $columns[$columnIdx];
 
-                if (!$column['db'])
-                {
+                if (!$column['db']) {
                     continue;
                 }
 
-                if ($requestColumn['orderable'] == 'true')
-                {
+                if ($requestColumn['orderable'] == 'true') {
                     $dir = $request['order'][$i]['dir'] === 'asc' ? 'ASC' : 'DESC';
 
-                    if ($column['name'] == 'transport')
-                    {
+                    if ($column['name'] == 'transport') {
                         $orderBy[] = "GREATEST($t." . $column['db'] . ", $t.transportTime) " . $dir;
-                    }
-                    else
-                    {
+                    } else {
                         $orderBy[] = "$t." . $column['db'] . " " . $dir;
                     }
 
                 }
             }
 
-            if ($orderBy)
-            {
+            if ($orderBy) {
                 $arrOptions['order'] = implode(', ', $orderBy);
             }
         }
@@ -486,7 +448,7 @@ class ListWidget extends \Widget
      * Pull a particular property from each assoc. array in a numeric array,
      * returning and array of the property values from each item.
      *
-     * @param  array  $a    Array to get data from
+     * @param  array $a Array to get data from
      * @param  string $prop Property to read
      *
      * @return array        Array of property values
@@ -494,8 +456,7 @@ class ListWidget extends \Widget
     protected static function pluck($a, $prop)
     {
         $out = [];
-        for ($i = 0, $len = count($a); $i < $len; $i++)
-        {
+        for ($i = 0, $len = count($a); $i < $len; $i++) {
             $out[] = $a[$i][$prop];
         }
 
@@ -503,3 +464,4 @@ class ListWidget extends \Widget
     }
 
 }
+
