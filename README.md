@@ -1,5 +1,7 @@
 # Contao List Widget
 
+> For contao 4 please use [List Widget Bundle](https://github.com/heimrichhannot/contao-list-widget-bundle)
+
 This simple module offers functionality for displaying a list in the Contao backend (either as a dca field or in a backend module).
 
 For visualization the javascript library [DataTables](https://github.com/DataTables/DataTables) is used.
