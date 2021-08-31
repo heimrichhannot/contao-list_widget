@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2021-08-31
+
+- Added: support for php 8
+
 ## [2.1.7] - 2018-02-01
 
 ### Fixed 
